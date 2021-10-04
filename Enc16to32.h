@@ -4,7 +4,7 @@
  * @author Ali Moallem (https://github.com/AliMoal)
  * @brief  
  *         Functionalities of the this file:
- *          + Change encoder timer 16 bits to 32 bits 
+ *          + Change encoder timer 16 bits to 32 bits specially for STM32 Microcontrollers
  **********************************************************************************
  *
  *! Copyright (c) 2021 Mahda Embedded System (MIT License)
@@ -39,12 +39,16 @@ extern "C" {
 
 //* Includes ---------------------------------------------------------------------- //
 #include <stdint.h>
+#include <stdbool.h>
 
 //? User Configurations and Notes ------------------------------------------------- //
 // ! Important Notes:
 // Place timer Overflow AND Underflow OR OverUnderflow functions in their related IRQ handler
 #define Debug_Enable                        // Uncomment if you want to use (depends on printf in stdio.h)
+#define Use_Timer_Direction                 // Uncomment if you want to use timer direction (Upcounting or Downcounting)
 #define ForceInline                         // Place your Force Inline attribute here, otherwise functions will work normally (e.g. __forceinline for Keil)
+// * To use this library for STM32 Microcontrollers for Overflow/Underflow IRQ handler you can use this:
+// *  if(TIMx->SR & 1) { TIMx->SR &= 0xFFFE; Enc16to32_IRQ_TimerOverUnderflow(&Enc16to32_Handler_TIMx); }
 //? ------------------------------------------------------------------------------- //
 
 /**
@@ -53,9 +57,16 @@ extern "C" {
  ** ==================================================================================
  **/
  
+ /**
+  * @brief  Handler of library
+  * @note   Must be initialized before calling Enc16to32_Init function
+  */
 typedef struct
 Enc16to32_Handler_s {
-  uint16_t (*GetTimerValue)(void);     // Must be initialized (e.g. Getting TIMx->CNT value in STM32 Microcontrollers)
+  uint16_t (*GetTimerValue)(void);     // Must be initialized (e.g. Getting [TIMx->CNT] value in STM32 Microcontrollers)
+#ifdef Use_Timer_Direction
+  bool (*GetTimerDirection)(void);     // Must be initialized | retval= 0: Upcounting 1: Downcounting |(e.g. Getting [(TIMx->CR1 >> 4) & 1] value in STM32 Microcontrollers (DIR bit in CR1 reg))
+#endif
   uint16_t HighRegisterValue;          // !!! DO NOT USE OR EDIT THIS !!!
 } Enc16to32_Handler_t;
 

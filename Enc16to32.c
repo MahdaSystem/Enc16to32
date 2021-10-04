@@ -4,7 +4,7 @@
  * @author Ali Moallem (https://github.com/AliMoal)
  * @brief  
  *         Functionalities of the this file:
- *          + Change encoder timer 16 bits to 32 bits 
+ *          + Change encoder timer 16 bits to 32 bits specially for STM32 Microcontrollers
  **********************************************************************************
  *
  *! Copyright (c) 2021 Mahda Embedded System (MIT License)
@@ -75,8 +75,14 @@ Enc16to32_GetEncoderValue(Enc16to32_Handler_t *Encoder_Handler) { return ((Encod
  */
 ForceInline void
 Enc16to32_IRQ_TimerOverUnderflow(Enc16to32_Handler_t *Encoder_Handler) {
-  if ((Encoder_Handler->GetTimerValue() >= 0x7FFF) && (Encoder_Handler->HighRegisterValue >= 0)) Encoder_Handler->HighRegisterValue--;
-  else if ((Encoder_Handler->GetTimerValue() <= 0x7FFF) && (Encoder_Handler->HighRegisterValue <= 0xFFFF)) Encoder_Handler->HighRegisterValue++; }
+#ifdef Use_Timer_Direction
+  if (Encoder_Handler->GetTimerDirection()) Encoder_Handler->HighRegisterValue--;
+  else Encoder_Handler->HighRegisterValue++;
+#else
+  if (Encoder_Handler->GetTimerValue() >= 0x7FFF) Encoder_Handler->HighRegisterValue--;
+  else if (Encoder_Handler->GetTimerValue() <= 0x7FFF) Encoder_Handler->HighRegisterValue++; 
+#endif
+}
 
 /**
  * @brief  Handles the timer Overflow IRQ 
@@ -85,7 +91,7 @@ Enc16to32_IRQ_TimerOverUnderflow(Enc16to32_Handler_t *Encoder_Handler) {
  * @retval None
  */
 ForceInline void
-Enc16to32_IRQ_TimerOverflow(Enc16to32_Handler_t *Encoder_Handler) { if(Encoder_Handler->HighRegisterValue <= 0xFFFF) Encoder_Handler->HighRegisterValue++; }
+Enc16to32_IRQ_TimerOverflow(Enc16to32_Handler_t *Encoder_Handler) { Encoder_Handler->HighRegisterValue++; }
 
 /**
  * @brief  Handles the timer Underflow IRQ 
@@ -94,5 +100,5 @@ Enc16to32_IRQ_TimerOverflow(Enc16to32_Handler_t *Encoder_Handler) { if(Encoder_H
  * @retval None
  */
 ForceInline void
-Enc16to32_IRQ_TimerUnderflow(Enc16to32_Handler_t *Encoder_Handler) { if(Encoder_Handler->HighRegisterValue >= 0) Encoder_Handler->HighRegisterValue--; }
+Enc16to32_IRQ_TimerUnderflow(Enc16to32_Handler_t *Encoder_Handler) { Encoder_Handler->HighRegisterValue--; }
 
